@@ -1,41 +1,17 @@
 name = "luna-cst0410-reader"
 main = "src/workers/index.ts"
 compatibility_date = "2026-09-18"
-workers_dev = true
+account_id = "73d83b88a2a61be02e22b16ca46d2916"
 
-# Account & Routes
-account_id = "a933c790e31c13f6d4c7da9ad3e84c6e"
-routes = [
-  { pattern = "api.luna-reader.dev/api/*", zone_name = "luna-reader.dev" }
-]
-
-# R2 Storage
 [[r2_buckets]]
 binding = "R2"
 bucket_name = "luna-cst0410-videos"
 jurisdiction = "eu"
 
-# KV Namespaces (Job Queue & Cache)
 [[kv_namespaces]]
 binding = "KV_JOBS"
 id = "5dac3ccb81b84b6cb7d21b60a061952f"
 preview_id = "5dac3ccb81b84b6cb7d21b60a061952f"
 
-# Environment Variables
-vars = {
-  ENVIRONMENT = "production",
-  LOG_LEVEL = "info",
-  API_VERSION = "v1"
-}
-
-# Production Environment
 [env.production]
-vars = { ENVIRONMENT = "production", LOG_LEVEL = "info" }
-
-# Staging Environment
-[env.staging]
-vars = { ENVIRONMENT = "staging", LOG_LEVEL = "debug" }
-
-# Local dev
-[env.development]
-vars = { ENVIRONMENT = "development", LOG_LEVEL = "debug" }
+vars = { ENVIRONMENT = "production", LOG_LEVEL = "info", API_VERSION = "v1" }
