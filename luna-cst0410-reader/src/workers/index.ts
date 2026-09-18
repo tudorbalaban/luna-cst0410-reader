@@ -1,14 +1,17 @@
 import { Router, json } from 'itty-router';
 import { CST0410Reader } from '../core/reader';
-import { Env, ProcessRequest, JobStatus } from '../types/index';
+import { ProcessRequest, JobStatus } from '../types/index';
 
-const router = Router<{ Bindings: Env }>();
+const router = Router();
 
-router.use('*', (req, env) => {
+// In-memory job store (for demo; use KV in production)
+const jobStore = new Map<string, JobStatus>();
+
+router.use('*', (req) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
 });
 
-router.post<{ Bindings: Env }>('/api/v1/process', async (req, env) => {
+router.post('/api/v1/process', async (req) => {
   try {
     const payload = (await req.json()) as ProcessRequest;
 
@@ -25,7 +28,7 @@ router.post<{ Bindings: Env }>('/api/v1/process', async (req, env) => {
       createdAt: new Date().toISOString(),
     };
 
-    await env.KV_JOBS.put(jobId, JSON.stringify(job), { expirationTtl: 604800 });
+    jobStore.set(jobId, job);
 
     console.log(`[POST /process] Job ${jobId} created, starting processing...`);
 
@@ -33,7 +36,7 @@ router.post<{ Bindings: Env }>('/api/v1/process', async (req, env) => {
     if (!videoResp.ok) {
       job.status = 'FAILED';
       job.error = `Failed to fetch video: ${videoResp.statusText}`;
-      await env.KV_JOBS.put(jobId, JSON.stringify(job));
+      jobStore.set(jobId, job);
       return json(job, { status: 400 });
     }
 
@@ -46,11 +49,7 @@ router.post<{ Bindings: Env }>('/api/v1/process', async (req, env) => {
     job.result = result;
     job.completedAt = new Date().toISOString();
 
-    await env.KV_JOBS.put(jobId, JSON.stringify(job));
-
-    await env.R2.put(`results/${jobId}.json`, JSON.stringify(result, null, 2), {
-      httpMetadata: { contentType: 'application/json' },
-    });
+    jobStore.set(jobId, job);
 
     return json(job, { status: 200 });
   } catch (error) {
@@ -60,16 +59,15 @@ router.post<{ Bindings: Env }>('/api/v1/process', async (req, env) => {
   }
 });
 
-router.get<{ Bindings: Env }>('/api/v1/jobs/:jobId', async (req, env) => {
+router.get('/api/v1/jobs/:jobId', async (req) => {
   try {
     const { jobId } = req.params;
-    const jobData = await env.KV_JOBS.get(jobId);
+    const job = jobStore.get(jobId);
 
-    if (!jobData) {
+    if (!job) {
       return json({ error: 'Job not found' }, { status: 404 });
     }
 
-    const job = JSON.parse(jobData) as JobStatus;
     return json(job, { status: 200 });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);

@@ -3,15 +3,5 @@ main = "src/workers/index.ts"
 compatibility_date = "2026-09-18"
 account_id = "73d83b88a2a61be02e22b16ca46d2916"
 
-[[r2_buckets]]
-binding = "R2"
-bucket_name = "luna-cst0410-videos"
-jurisdiction = "eu"
-
-[[kv_namespaces]]
-binding = "KV_JOBS"
-id = "5dac3ccb81b84b6cb7d21b60a061952f"
-preview_id = "5dac3ccb81b84b6cb7d21b60a061952f"
-
 [env.production]
 vars = { ENVIRONMENT = "production", LOG_LEVEL = "info", API_VERSION = "v1" }
